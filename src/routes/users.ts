@@ -3,10 +3,10 @@ import bcrypt from "bcrypt";
 import { ddb } from "../db/dyClient";
 import { PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { createToken } from "../utilities/jwt";
-import { User } from "../types";
+import { User } from "../types/types";
 
 const router = express.Router();
-//registration
+
 router.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 7);
@@ -22,7 +22,6 @@ router.post("/register", async (req, res) => {
   res.status(201).json({ message: "user registered" });
 });
 
-//login
 router.post("/login", async (req, res) => {
   const { Email, Password } = req.body;
   const result = await ddb.send(
