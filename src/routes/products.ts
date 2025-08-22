@@ -6,6 +6,7 @@ import {
   ScanCommand,
   DeleteCommand,
   UpdateCommand,
+  GetCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { Product } from "../types/types";
 import { requireUser } from "../middleware/requreUser";
@@ -120,5 +121,40 @@ router.delete("/:productId", requireUser, async (req, res) => {
     res.status(500).json({ error: "Failed to delete product" });
   }
 });
+router.post("/:productId/view", async (req, res) => {
+  const user = (req as any).user;
+  const { productId } = req.params;
 
+  await ddb.send(
+    new UpdateCommand({
+      TableName: "Products",
+      Key: { productId },
+      UpdateExpression: "ADD ViewCount :one",
+      ExpressionAttributeValues: { ":one": 1 },
+    })
+  );
+
+  const recenViewKey = { userId: user.userId };
+  const current = await ddb.send(
+    new GetCommand({
+      TableName: "RecentlyViewed",
+      Key: recenViewKey,
+    })
+  );
+
+  const now = new Date().toISOString();
+  const existing: string[] = (current.Item?.productIds ?? []) as string[];
+  const next = [productId, ...existing.filter((id) => id !== productId)].slice(
+    0,
+    10
+  );
+
+  await ddb.send(
+    new PutCommand({
+      TableName: "RecentlyViewed",
+      Item: { userId: user.userId, productIds: next, updatedAt: now },
+    })
+  );
+  res.json({ ok: true });
+});
 export default router;
