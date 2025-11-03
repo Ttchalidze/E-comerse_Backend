@@ -1,4 +1,4 @@
-{
+/*{
   "compilerOptions": {
     "target": "ES2021",
     "module": "ESNext",
@@ -10,4 +10,21 @@
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true
   }
+}*/
+{
+  "compilerOptions": {
+    "target": "ESNext", // Target ES6 for modern JavaScript
+    "module": "ESNext", // Use the latest module system
+    "moduleResolution": "node", // Resolve modules using Node.js strategy
+    "strict": false, // Enable all strict type checking options
+    "esModuleInterop": true, // Allow default imports from non-ES modules
+    "skipLibCheck": true, // Skip type checking of declaration files
+    "forceConsistentCasingInFileNames": true,
+    "declaration": false, // Generate .d.ts declaration files
+    //"declarationDir": "./types", // Specify the output directory for declaration files
+    "outDir": "./dist", // Specify the output directory for compiled JS
+    "sourceMap": true // Enable source maps for debugging
+  },
+  "include": ["src/**/*.ts"], // Include all TypeScript files in 'src'
+  "exclude": ["node_modules", "dist"] // Exclude unnecessary directories
 }

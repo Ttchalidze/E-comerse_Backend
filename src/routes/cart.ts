@@ -10,7 +10,7 @@ router.post("/", requireUser, async (req, res) => {
   const { items } = req.body;
 
   const cart = { userId: user.userId, items };
-  await ddb.send(new PutCommand({ TableName: "cart", Item: cart }));
+  await ddb.send(new PutCommand({ TableName: "EcommerceTable", Item: cart }));
   res.status(201).json(cart);
 });
 //get whole cart
@@ -18,7 +18,7 @@ router.get("/", requireUser, async (req, res) => {
   const user = (req as any).user;
 
   const reuslt = await ddb.send(
-    new GetCommand({ TableName: "Cart", Key: { userId: user.userI } })
+    new GetCommand({ TableName: "EcommerceTable", Key: { userId: user.userI } })
   );
   res.json(reuslt.Item);
 });
@@ -28,7 +28,10 @@ router.delete("/:productyId", requireUser, async (req, res) => {
   const { productId } = req.params;
 
   const result = await ddb.send(
-    new GetCommand({ TableName: "Cart", Key: { userId: user.userId } })
+    new GetCommand({
+      TableName: "EcommerceTable",
+      Key: { userId: user.userId },
+    })
   );
   const cart = result.Item;
   if (!cart) return res.status(404).json({ error: "cart not found" });
@@ -38,7 +41,7 @@ router.delete("/:productyId", requireUser, async (req, res) => {
   );
   await ddb.send(
     new PutCommand({
-      TableName: "cart",
+      TableName: "EcommerceTable",
       Item: {
         userId: user.userId,
         items: itemsFiltered,

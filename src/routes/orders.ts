@@ -24,7 +24,7 @@ router.post("/", requireUser, async (req, res) => {
     createdAt: new Date().toISOString(),
   };
 
-  await ddb.send(new PutCommand({ TableName: "orders", Item: order }));
+  await ddb.send(new PutCommand({ TableName: "EcommerceTable", Item: order }));
   res.status(201).json(order);
 });
 
@@ -53,7 +53,7 @@ router.patch("/:orderId", requireUser, async (req, res) => {
 
   const result = await ddb.send(
     new UpdateCommand({
-      TableName: "orders",
+      TableName: "EcommerceTable",
       Key: { orderId },
       UpdateExpression: "SET " + setParts.join(", "),
       ExpressionAttributeNames,
@@ -72,7 +72,7 @@ router.delete("/:orderId", requireUser, async (req, res) => {
 
   await ddb.send(
     new DeleteCommand({
-      TableName: "orders",
+      TableName: "EcommerceTable",
       Key: { orderId },
       ConditionExpression: "userId = :uid",
       ExpressionAttributeValues: { ":uid": user.userId },
