@@ -18,6 +18,8 @@ export interface Product {
   imageURL?: string;
   sellerId: string;
   description?: string;
+  createdAt: string;
+  viewCount?: number;
 }
 
 export interface Cart {

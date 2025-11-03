@@ -1,14 +1,15 @@
 import express from "express";
 import crypto from "crypto";
-import { ddb } from "./Ecomerse/E-comerse/src/db/dyClient";
+import { ddb } from "../db/dyClient";
 import {
   PutCommand,
   ScanCommand,
   DeleteCommand,
   UpdateCommand,
+  GetCommand,
 } from "@aws-sdk/lib-dynamodb";
-import { Product } from "./Ecomerse/E-comerse/src/types/types";
-import { requireUser } from "./Ecomerse/E-comerse/src/middleware/requreUser";
+import { Product } from "../types/types";
+import { requireUser } from "../middleware/requreUser";
 
 const router = express.Router();
 
@@ -124,8 +125,10 @@ router.delete("/:productId", requireUser, async (req, res) => {
     res.status(500).json({ error: "Failed to delete product" });
   }
 });
+router.post("/:productId/view", async (req, res) => {
+  const user = (req as any).user;
+  const { productId } = req.params;
 
-<<<<<<< HEAD
   await ddb.send(
     new UpdateCommand({
       TableName: "EcommerceTable",
@@ -158,6 +161,4 @@ router.delete("/:productId", requireUser, async (req, res) => {
   );
   res.json({ ok: true });
 });
-=======
->>>>>>> parent of 80859cd (homepage and recentView done)
 export default router;

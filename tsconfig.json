@@ -1,4 +1,4 @@
-{
+/*{
   "compilerOptions": {
     "target": "ES2021",
     "module": "ESNext",
@@ -10,7 +10,8 @@
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true
   }
-}{
+}*/
+{
   "compilerOptions": {
     "target": "ESNext", // Target ES6 for modern JavaScript
     "module": "ESNext", // Use the latest module system
@@ -24,6 +25,6 @@
     "outDir": "./dist", // Specify the output directory for compiled JS
     "sourceMap": true // Enable source maps for debugging
   },
-  "include": ["src/**/*.ts", "src/routes/homePage.ts", "../../products.ts"], // Include all TypeScript files in 'src'
+  "include": ["src/**/*.ts"], // Include all TypeScript files in 'src'
   "exclude": ["node_modules", "dist"] // Exclude unnecessary directories
 }
