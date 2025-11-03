@@ -1,5 +1,6 @@
 # 🛍️ E-Commerce Backend (TypeScript + AWS DynamoDB)
 #/** Home project to learn AWS SDK */
+
 This project is a backend API for an E-Commerce platform built with **Node.js**, **TypeScript**, and **Express.js**.  
 It uses **AWS DynamoDB** for data storage and supports users, products, carts, and orders.
 ---
