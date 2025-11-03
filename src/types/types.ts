@@ -1,6 +1,7 @@
 export interface User {
   userId: string;
   name: string;
+  lastname: string;
   email: string;
   password: string;
   role?: "seller" | "admin";
@@ -17,8 +18,6 @@ export interface Product {
   imageURL?: string;
   sellerId: string;
   description?: string;
-  createdAt: string;
-  viewCount?: number;
 }
 
 export interface Cart {

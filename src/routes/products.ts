@@ -1,20 +1,21 @@
 import express from "express";
 import crypto from "crypto";
-import { ddb } from "../db/dyClient";
+import { ddb } from "./Ecomerse/E-comerse/src/db/dyClient";
 import {
   PutCommand,
   ScanCommand,
   DeleteCommand,
   UpdateCommand,
-  GetCommand,
 } from "@aws-sdk/lib-dynamodb";
-import { Product } from "../types/types";
-import { requireUser } from "../middleware/requreUser";
+import { Product } from "./Ecomerse/E-comerse/src/types/types";
+import { requireUser } from "./Ecomerse/E-comerse/src/middleware/requreUser";
 
 const router = express.Router();
 
 router.get("/", async (_req, res) => {
-  const result = await ddb.send(new ScanCommand({ TableName: "Products" }));
+  const result = await ddb.send(
+    new ScanCommand({ TableName: "EcommerceTable" })
+  );
   res.json((result.Items || []) as Product[]);
 });
 
@@ -27,17 +28,19 @@ router.post("/", requireUser, async (req, res) => {
     sellerId: user.userId,
   };
 
-  await ddb.send(new PutCommand({ TableName: "Products", Item: product }));
+  await ddb.send(
+    new PutCommand({ TableName: "EcommerceTable", Item: product })
+  );
   res.status(201).json(product);
 });
 
-router.get("/seller", requireUser, async (req, res) => {
+router.get("/user", requireUser, async (req, res) => {
   const user = (req as any).user;
 
   const result = await ddb.send(
     new ScanCommand({
-      TableName: "Products",
-      FilterExpression: "sellerId = :sid",
+      TableName: "EcommerceTable",
+      FilterExpression: "userid = :sid",
       ExpressionAttributeValues: { ":sid": user.userId },
     })
   );
@@ -78,7 +81,7 @@ router.patch("/:productId", requireUser, async (req, res) => {
   try {
     const out = await ddb.send(
       new UpdateCommand({
-        TableName: "Products",
+        TableName: "EcommerceTable",
         Key: { productId },
         UpdateExpression: `SET ${sets.join(", ")}`,
         ExpressionAttributeNames: names,
@@ -105,7 +108,7 @@ router.delete("/:productId", requireUser, async (req, res) => {
   try {
     await ddb.send(
       new DeleteCommand({
-        TableName: "Products",
+        TableName: "EcommerceTable",
         Key: { productId },
         ConditionExpression: "sellerId = :sid",
         ExpressionAttributeValues: { ":sid": user.userId },
@@ -121,13 +124,11 @@ router.delete("/:productId", requireUser, async (req, res) => {
     res.status(500).json({ error: "Failed to delete product" });
   }
 });
-router.post("/:productId/view", async (req, res) => {
-  const user = (req as any).user;
-  const { productId } = req.params;
 
+<<<<<<< HEAD
   await ddb.send(
     new UpdateCommand({
-      TableName: "Products",
+      TableName: "EcommerceTable",
       Key: { productId },
       UpdateExpression: "ADD ViewCount :one",
       ExpressionAttributeValues: { ":one": 1 },
@@ -137,7 +138,7 @@ router.post("/:productId/view", async (req, res) => {
   const recenViewKey = { userId: user.userId };
   const current = await ddb.send(
     new GetCommand({
-      TableName: "RecentlyViewed",
+      TableName: "EcommerceTable",
       Key: recenViewKey,
     })
   );
@@ -151,10 +152,12 @@ router.post("/:productId/view", async (req, res) => {
 
   await ddb.send(
     new PutCommand({
-      TableName: "RecentlyViewed",
+      TableName: "EcommerceTable",
       Item: { userId: user.userId, productIds: next, updatedAt: now },
     })
   );
   res.json({ ok: true });
 });
+=======
+>>>>>>> parent of 80859cd (homepage and recentView done)
 export default router;

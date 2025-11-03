@@ -4,12 +4,10 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 
 import userRoutes from "./routes/users";
-import productRoutes from "./routes/products";
+import productRoutes from "./products";
 import orderRoutes from "./routes/orders";
 import cartRoutes from "./routes/cart";
 import adminRoutes from "./routes/admin";
-import recentlyViewedRoutes from "./routes/recentlyViewed";
-import homeRoutes from "./routes/homePage";
 
 dotenv.config();
 
@@ -20,13 +18,11 @@ app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
 
-app.use("/api/recently-viewed", recentlyViewedRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/home", homeRoutes);
 
 app.get("/", (_req, res) => res.send("E-commerce backend is running"));
 
