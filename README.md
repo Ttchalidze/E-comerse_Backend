@@ -1,1 +1,18 @@
-# E-comerse /_"build": "rimraf ..\\infrasturacture\\dynamodb-backend\\build && robocopy . ..\\infrasturacture\\dynamodb-backend\\build /MIR /XD node_modules .git >nul & if %ERRORLEVEL% LEQ 7 (exit 0) else (exit %ERRORLEVEL%)",_/
+# 🛍️ E-Commerce Backend (TypeScript + AWS DynamoDB)
+
+/\*_ Home project to learn AWS SDK _/
+
+This project is a backend API for an E-Commerce platform built with **Node.js**, **TypeScript**, and **Express.js**.  
+It uses **AWS DynamoDB** for data storage and supports users, products, carts, and orders.
+
+---
+
+## 🚀 Tech Stack
+
+- **Node.js + Express.js** – server framework
+- **TypeScript** – for type safety and cleaner code
+- **AWS SDK v3** – for DynamoDB, S3, and EC2 integration
+- **DynamoDB** – NoSQL database
+- **bcrypt** – password hashing
+- **JWT (JSON Web Token)** – authentication
+- **dotenv** – environment variable management
