@@ -1,28 +1,26 @@
 import express from "express";
 import { ddb } from "../db/dyClient";
-import { ScanCommand } from "@aws-sdk/client-dynamodb";
+import { QueryCommand, ScanCommand } from "@aws-sdk/client-dynamodb";
 import { requireUser } from "../middleware/requreUser";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { inversePkQuery } from "../db/QueryFunction";
 
 const router = express.Router();
 
 router.get("/user", requireUser, requireAdmin, async (_req, res) => {
-  const result = await ddb.send(new ScanCommand({ TableName: "User" }));
-  res.json(result.Items);
+  const result = await inversePkQuery("profile");
+  res.json(result);
 });
 
-router.get("/product", requireUser, requireAdmin, async (_req, res) => {
-  const result = await ddb.send(new ScanCommand({ TableName: "Products" }));
-  res.json(result.Items);
-});
+router.get("/product", requireUser, requireAdmin, async (_req, res) => {});
 
 router.delete("/users/:userId", requireUser, requireAdmin, async (req, res) => {
   const { userId } = req.params;
 
   await ddb.send(
     new DeleteCommand({
-      TableName: "User",
+      TableName: "EcommerceTable",
       Key: { userId },
     })
   );
@@ -39,7 +37,7 @@ router.delete(
 
     await ddb.send(
       new DeleteCommand({
-        TableName: "Orders",
+        TableName: "EcommerceTable",
         Key: { orderId },
       })
     );
@@ -57,7 +55,7 @@ router.delete(
 
     await ddb.send(
       new DeleteCommand({
-        TableName: "Products",
+        TableName: "EcommerceTable",
         Key: { productId },
       })
     );

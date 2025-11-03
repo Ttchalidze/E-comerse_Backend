@@ -1,1 +1,1 @@
-# E-comerse
+# E-comerse /_"build": "rimraf ..\\infrasturacture\\dynamodb-backend\\build && robocopy . ..\\infrasturacture\\dynamodb-backend\\build /MIR /XD node_modules .git >nul & if %ERRORLEVEL% LEQ 7 (exit 0) else (exit %ERRORLEVEL%)",_/

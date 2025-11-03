@@ -17,7 +17,9 @@ router.get("/", async (req, res) => {
       } catch {}
     }
 
-    const all = await ddb.send(new ScanCommand({ TableName: "Products" }));
+    const all = await ddb.send(
+      new ScanCommand({ TableName: "EcommerceTable" })
+    );
     const products = (all.Items || []) as Product[];
 
     const trending = products
@@ -31,7 +33,7 @@ router.get("/", async (req, res) => {
 
     const rv = await ddb.send(
       new GetCommand({
-        TableName: "recent",
+        TableName: "EcommerceTable",
         Key: { userId: user.userId },
       })
     );
