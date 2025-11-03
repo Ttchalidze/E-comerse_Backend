@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { strictObject, ZodType } from "zod";
+import { ZodType } from "zod";
 
 export function validateBody(schema: ZodType) {
   return (req: Request, res: Response, next: NextFunction) => {

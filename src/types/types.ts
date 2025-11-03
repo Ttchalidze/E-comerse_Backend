@@ -1,9 +1,9 @@
 export interface User {
   userId: string;
   name: string;
+  lastname: string;
   email: string;
   password: string;
-  //use is buyer and seller at the same time (similar to ebay)
   role?: "seller" | "admin";
   address?: string;
   phone?: string;
@@ -16,7 +16,10 @@ export interface Product {
   category: string;
   stock: number;
   imageURL?: string;
-  sellerID: string;
+  sellerId: string;
+  description?: string;
+  createdAt: string;
+  viewCount?: number;
 }
 
 export interface Cart {
