@@ -4,22 +4,20 @@ import {
   CreateTableCommandInput,
 } from "@aws-sdk/client-dynamodb";
 
-// Create DynamoDB client
 const client = new DynamoDBClient({ region: "us-east-1" });
 
 const createTable = async () => {
   try {
-    // Correcting the params type by adding proper types
     const params: CreateTableCommandInput = {
-      TableName: "EcommerceTable", // Name of the table
+      TableName: "EcommerceTable",
       KeySchema: [
-        { AttributeName: "PK", KeyType: "HASH" }, // Partition key
-        { AttributeName: "SK", KeyType: "RANGE" }, // Sort key
+        { AttributeName: "PK", KeyType: "HASH" },
+        { AttributeName: "SK", KeyType: "RANGE" },
       ],
-      // Attribute definitions only for the table's keys
+
       AttributeDefinitions: [
-        { AttributeName: "PK", AttributeType: "S" }, // Partition key type (String)
-        { AttributeName: "SK", AttributeType: "S" }, // Sort key type (String)
+        { AttributeName: "PK", AttributeType: "S" },
+        { AttributeName: "SK", AttributeType: "S" },
       ],
       ProvisionedThroughput: {
         ReadCapacityUnits: 5,
@@ -27,13 +25,13 @@ const createTable = async () => {
       },
       GlobalSecondaryIndexes: [
         {
-          IndexName: "inverse-index", // Inverse Index
+          IndexName: "inverse-index",
           KeySchema: [
-            { AttributeName: "SK", KeyType: "HASH" }, // GSI Partition Key (original SK)
-            { AttributeName: "PK", KeyType: "RANGE" }, // GSI Sort Key (original PK)
+            { AttributeName: "SK", KeyType: "HASH" },
+            { AttributeName: "PK", KeyType: "RANGE" },
           ],
           Projection: {
-            ProjectionType: "ALL", // Project all attributes
+            ProjectionType: "ALL",
           },
           ProvisionedThroughput: {
             ReadCapacityUnits: 5,
@@ -43,7 +41,6 @@ const createTable = async () => {
       ],
     };
 
-    // Create the table with the command
     const command = new CreateTableCommand(params);
     const response = await client.send(command);
     console.log(

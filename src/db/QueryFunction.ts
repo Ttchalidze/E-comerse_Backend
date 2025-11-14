@@ -3,9 +3,9 @@ import { ddb } from "./dyClient";
 
 export async function inversePkQuery(pkVAlue: string) {
   const params = {
-    TableName: "EcommerceTable", // your DynamoDB table name
-    IndexName: "inverse-index", // name of your inverse GSI
-    KeyConditionExpression: "PK = :pk", // Query for Profile in the inverse GSI
+    TableName: "EcommerceTable",
+    IndexName: "inverse-index",
+    KeyConditionExpression: "PK = :pk",
     ExpressionAttributeValues: {
       ":pk": { S: pkVAlue },
     },

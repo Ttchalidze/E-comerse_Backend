@@ -10,29 +10,26 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { Product } from "../types/types";
 import { requireUser } from "../middleware/requreUser";
+import { inversePkQuery } from "../db/QueryFunction";
+import { error } from "console";
 
 const router = express.Router();
 
 router.get("/", async (_req, res) => {
-  const result = await ddb.send(
-    new ScanCommand({ TableName: "EcommerceTable" })
-  );
-  res.json((result.Items || []) as Product[]);
+  try {
+    const items = await inversePkQuery("ITEM#");
+    res.json({ products: items });
+  } catch (err) {
+    console.error("products GET error", err);
+    res.status(500).json({ error: "Failed to fetch products" });
+  }
 });
-
+//still working on it
 router.post("/", requireUser, async (req, res) => {
-  const user = (req as any).user;
-
-  const product: Product = {
-    ...req.body,
-    productId: crypto.randomUUID(),
-    sellerId: user.userId,
-  };
-
-  await ddb.send(
-    new PutCommand({ TableName: "EcommerceTable", Item: product })
-  );
-  res.status(201).json(product);
+  try {
+    const user = (req as any).user;
+    const { name, description, price, category, imageURL } = req.body;
+  } catch (err) {}
 });
 
 router.get("/user", requireUser, async (req, res) => {
