@@ -3,91 +3,113 @@ import crypto from "crypto";
 import { ddb } from "../db/dyClient";
 import {
   PutCommand,
-  ScanCommand,
   DeleteCommand,
   UpdateCommand,
   GetCommand,
 } from "@aws-sdk/lib-dynamodb";
-import { Product } from "../types/types";
 import { requireUser } from "../middleware/requreUser";
+import { inversePkQuery } from "../db/QueryFunction";
 
 const router = express.Router();
 
 router.get("/", async (_req, res) => {
-  const result = await ddb.send(
-    new ScanCommand({ TableName: "EcommerceTable" })
-  );
-  res.json((result.Items || []) as Product[]);
+  try {
+    const items = await inversePkQuery("ITEM#");
+    res.json({ products: items });
+  } catch (err) {
+    console.error("products GET error", err);
+    res.status(500).json({ error: "Failed to fetch products" });
+  }
 });
-
 router.post("/", requireUser, async (req, res) => {
-  const user = (req as any).user;
+  try {
+    const user = (req as any).user;
+    const { name, description, price, category, imageURL } = req.body;
 
-  const product: Product = {
-    ...req.body,
-    productId: crypto.randomUUID(),
-    sellerId: user.userId,
-  };
+    if (!name || !price) {
+      return res.status(400).json({ error: "missing name or price" });
+    }
+    const productId = crypto.randomUUID();
 
-  await ddb.send(
-    new PutCommand({ TableName: "EcommerceTable", Item: product })
-  );
-  res.status(201).json(product);
+    const product = {
+      PK: `PRODUCT#${productId}`,
+      SK: `ITEM#${productId}`,
+      productId,
+      name,
+      price,
+      description: description || "",
+      category: category || "",
+      imageURL: imageURL || "",
+      viewCount: 0,
+      createdAt: new Date().toISOString(),
+    };
+    await ddb.send(
+      new PutCommand({ TableName: "EcommerceTable", Item: product })
+    );
+    res.status(201).json({ message: "product created", product });
+  } catch (err) {
+    console.error("products POST error", err);
+    res.status(500).json({ error: "failed to create Product" });
+  }
 });
 
 router.get("/user", requireUser, async (req, res) => {
-  const user = (req as any).user;
-
-  const result = await ddb.send(
-    new ScanCommand({
-      TableName: "EcommerceTable",
-      FilterExpression: "userid = :sid",
-      ExpressionAttributeValues: { ":sid": user.userId },
-    })
-  );
-
-  res.json(result.Items || []);
+  try {
+    const user = (req as any).user;
+    const items = await inversePkQuery("ITEM#");
+    const userProducts = items.filter((p) => p.sellerId?.S === user.userId);
+    res.json({ products: userProducts });
+  } catch (err) {
+    console.error("products Get usererror", err);
+    res.status(500).json({ error: "failed to fetch user products" });
+  }
 });
 
 router.patch("/:productId", requireUser, async (req, res) => {
-  const user = (req as any).user;
-  const { productId } = req.params;
-
-  const allowed = [
-    "name",
-    "description",
-    "price",
-    "category",
-    "stock",
-    "imageURL",
-  ] as const;
-  const entries = Object.entries(req.body || {}).filter(
-    ([k, v]) => allowed.includes(k as any) && v !== undefined
-  );
-  if (entries.length === 0)
-    return res.status(400).json({ error: "No valid fields to update" });
-
-  const names: Record<string, string> = {};
-  const values: Record<string, any> = { ":sid": user.userId };
-  const sets: string[] = [];
-
-  entries.forEach(([k, v], i) => {
-    const nk = `#f${i}`;
-    const vk = `:v${i}`;
-    names[nk] = k;
-    values[vk] = v;
-    sets.push(`${nk} = ${vk}`);
-  });
-
   try {
+    const user = (req as any).user;
+    const { productId } = req.params;
+
+    const allowed = [
+      "name",
+      "description",
+      "price",
+      "category",
+      "stock",
+      "imageURL",
+    ] as const;
+    const entries = Object.entries(req.body || {}).filter(
+      ([key, val]) => allowed.includes(key as any) && val !== undefined
+    );
+    if (entries.length === 0)
+      return res.status(400).json({ error: "No valid fields to update" });
+
+    const names: Record<string, string> = {};
+    const values: Record<string, any> = { ":sid": user.userId };
+    const sets: string[] = [];
+
+    entries.forEach(([k, v], i) => {
+      const nk = `#f${i}`;
+      const vk = `:v${i}`;
+      names[nk] = k;
+      values[vk] = v;
+      sets.push(`${nk} = ${vk}`);
+    });
+
     const out = await ddb.send(
       new UpdateCommand({
         TableName: "EcommerceTable",
-        Key: { productId },
-        UpdateExpression: `SET ${sets.join(", ")}`,
+        Key: {
+          PK: `PRODUCTY#${productId}`,
+          SK: `ITEM#${productId}`,
+        },
+        UpdateExpression: `SET ${sets.join(", ")},updatedAt = :updatedAt`,
         ExpressionAttributeNames: names,
-        ExpressionAttributeValues: values,
-        ConditionExpression: "sellerId = :sid",
+        ExpressionAttributeValues: {
+          ...values,
+          updatedAt: new Date().toISOString,
+        },
+        ConditionExpression: "sellerId = :uid",
         ReturnValues: "ALL_NEW",
       })
     );
@@ -103,14 +125,17 @@ router.patch("/:productId", requireUser, async (req, res) => {
 });
 
 router.delete("/:productId", requireUser, async (req, res) => {
-  const user = (req as any).user;
-  const { productId } = req.params;
-
   try {
+    const user = (req as any).user;
+    const { productId } = req.params;
+
     await ddb.send(
       new DeleteCommand({
         TableName: "EcommerceTable",
-        Key: { productId },
+        Key: {
+          PK: `PRODUCTY#${productId}`,
+          SK: `ITEM#${productId}`,
+        },
         ConditionExpression: "sellerId = :sid",
         ExpressionAttributeValues: { ":sid": user.userId },
       })
@@ -126,39 +151,54 @@ router.delete("/:productId", requireUser, async (req, res) => {
   }
 });
 router.post("/:productId/view", async (req, res) => {
-  const user = (req as any).user;
-  const { productId } = req.params;
+  try {
+    const user = (req as any).user;
+    const { productId } = req.params;
 
-  await ddb.send(
-    new UpdateCommand({
-      TableName: "EcommerceTable",
-      Key: { productId },
-      UpdateExpression: "ADD ViewCount :one",
-      ExpressionAttributeValues: { ":one": 1 },
-    })
-  );
+    await ddb.send(
+      new UpdateCommand({
+        TableName: "EcommerceTable",
+        Key: {
+          PK: `PRODUCTY#${productId}`,
+          SK: `ITEM#${productId}`,
+        },
+        UpdateExpression: "ADD ViewCount :one",
+        ExpressionAttributeValues: { ":one": 1 },
+      })
+    );
 
-  const recenViewKey = { userId: user.userId };
-  const current = await ddb.send(
-    new GetCommand({
-      TableName: "EcommerceTable",
-      Key: recenViewKey,
-    })
-  );
+    const recentViewKey = {
+      PK: `PRODUCTY#${productId}`,
+      SK: `ITEM#${productId}`,
+    };
+    const current = await ddb.send(
+      new GetCommand({
+        TableName: "EcommerceTable",
+        Key: recentViewKey,
+      })
+    );
 
-  const now = new Date().toISOString();
-  const existing: string[] = (current.Item?.productIds ?? []) as string[];
-  const next = [productId, ...existing.filter((id) => id !== productId)].slice(
-    0,
-    10
-  );
+    const now = new Date().toISOString();
+    const existing: string[] = (current.Item?.productIds ?? []) as string[];
+    const next = [
+      productId,
+      ...existing.filter((id) => id !== productId),
+    ].slice(0, 10);
 
-  await ddb.send(
-    new PutCommand({
-      TableName: "EcommerceTable",
-      Item: { userId: user.userId, productIds: next, updatedAt: now },
-    })
-  );
-  res.json({ ok: true });
+    await ddb.send(
+      new PutCommand({
+        TableName: "EcommerceTable",
+        Item: {
+          ...recentViewKey,
+          productIds: next,
+          updatedAt: now,
+        },
+      })
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("products VIEW error:", err);
+    res.status(500).json({ error: "Failed to update view" });
+  }
 });
 export default router;

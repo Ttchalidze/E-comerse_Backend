@@ -1,6 +1,5 @@
 import express from "express";
 import { ddb } from "../db/dyClient";
-import { QueryCommand, ScanCommand } from "@aws-sdk/client-dynamodb";
 import { requireUser } from "../middleware/requreUser";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { DeleteCommand } from "@aws-sdk/lib-dynamodb";

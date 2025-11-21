@@ -1,8 +1,9 @@
 import express from "express";
 import { ddb } from "../db/dyClient";
-import { ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import { Product } from "../types/types";
-
+import { inversePkQuery } from "../db/QueryFunction";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -17,10 +18,10 @@ router.get("/", async (req, res) => {
       } catch {}
     }
 
-    const all = await ddb.send(
-      new ScanCommand({ TableName: "EcommerceTable" })
+    const allProducts = await inversePkQuery("ITEM#");
+    const products = (allProducts || []).map(
+      (item) => unmarshall(item) as Product
     );
-    const products = (all.Items || []) as Product[];
 
     const trending = products
       .slice()
@@ -31,21 +32,24 @@ router.get("/", async (req, res) => {
       return res.json({ trending, recentlyViewed: [] });
     }
 
-    const rv = await ddb.send(
+    const result = await ddb.send(
       new GetCommand({
         TableName: "EcommerceTable",
-        Key: { userId: user.userId },
+        Key: {
+          PK: `USER#${user.userId}`,
+          SK: `RECENTLYVIEWD#${user.userId}`,
+        },
       })
     );
 
-    const recentIds: string[] = rv.Item?.productIds ?? [];
+    const recentIds: string[] = result.Item?.productIds ?? [];
     if (recentIds.length === 0) {
       return res.json({ trending, recentlyViewed: [] });
     }
 
-    const byId = new Map(products.map((p) => [p.productId, p]));
+    const productsMap = new Map(products.map((p) => [p.productId, p]));
     const recentlyViewed = recentIds
-      .map((id) => byId.get(id))
+      .map((id) => productsMap.get(id))
       .filter(Boolean)
       .slice(0, 20) as Product[];
 
