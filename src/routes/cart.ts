@@ -5,7 +5,6 @@ import { requireUser } from "../middleware/requreUser";
 import { inversePkQuery } from "../db/QueryFunction";
 
 const router = express.Router();
-//add to cart
 router.post("/", requireUser, async (req, res) => {
   try {
     const user = (req as any).user;
@@ -25,13 +24,12 @@ router.post("/", requireUser, async (req, res) => {
         Item: carItem,
       })
     );
-    res.status(201).json({ message: "ITem added to cart", item: carItem });
+    res.status(201).json({ message: "Item added to cart", item: carItem });
   } catch (error) {
     console.error("error adding to cart", error);
     res.status(500).json({ error: "failed to add item to cart" });
   }
 });
-//get whole cartd
 router.get("/", requireUser, async (req, res) => {
   try {
     const user = (req as any).user;
@@ -46,7 +44,6 @@ router.get("/", requireUser, async (req, res) => {
   }
 });
 
-//delete from cart
 router.delete("/:productyId", requireUser, async (req, res) => {
   const user = (req as any).user;
   const { productId } = req.params;

@@ -1,10 +1,9 @@
 import express from "express";
 import { ddb } from "../db/dyClient";
-import { ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import { Product } from "../types/types";
 import { inversePkQuery } from "../db/QueryFunction";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
-import { skip } from "node:test";
 const router = express.Router();
 
 router.get("/", async (req, res) => {

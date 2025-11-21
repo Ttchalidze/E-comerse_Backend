@@ -8,36 +8,86 @@ import { User } from "../types/types";
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
-  const { name, lastname, email, password } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 7);
+  try {
+    const { name, lastname, email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password required" });
+    }
+    const hashedPassword = await bcrypt.hash(password, 7);
+    const userId = crypto.randomUUID;
 
-  const user: User = {
-    userId: crypto.randomUUID(),
-    name,
-    lastname,
-    email,
-    password: hashedPassword,
-    createdAt: new Date().toISOString(),
-  };
-  await ddb.send(new PutCommand({ TableName: "EcommerceTable", Item: user }));
-  res.status(201).json({ message: "user registered" });
+    const user = {
+      PK: `USER#${userId}`,
+      SK: `PROFILE#${userId}`,
+      userId,
+      name,
+      lastname,
+      email,
+      role: "seller",
+      password: hashedPassword,
+      createdAt: new Date().toISOString(),
+    };
+    await ddb.send(
+      new PutCommand({
+        TableName: "EcommerceTable",
+        Item: user,
+        ConditionExpression: "attribute_not_exists(PK)",
+      })
+    );
+    res.status(201).json({ message: "user registered" });
+  } catch (error: any) {
+    if (error.name === "Condition Expression check failed") {
+      return res.status(500).json({ error: "Registration failed" });
+    }
+  }
 });
 
 router.post("/login", async (req, res) => {
-  const { Email, Password } = req.body;
-  const result = await ddb.send(
-    new GetCommand({ TableName: "EcommerceTable", Key: { UserId: Email } })
-  );
-  const user = result.Item as User;
-  if (!user) return res.status(401).json({ error: "invalid email" });
+  try {
+    const { email, password } = req.body;
+    if (!email || !password)
+      return res.status(400).json({ error: "Email + Password required" });
 
-  const userMatched = await bcrypt.compare(Password, user.password);
-  if (!userMatched) return res.status(401).json({ error: "invalid Password" });
-  const token = createToken({
-    UserId: user.userId,
-    Email: user.email,
-    Role: user.role,
-  });
-  res.json(token);
+    const emailLookUp = await ddb.send(
+      new GetCommand({
+        TableName: "EcommerceTable",
+        Key: {
+          PK: `EMAIL#${email}`,
+          SK: `EMAIL#${email}`,
+        },
+      })
+    );
+    if (!emailLookUp.Item) {
+      return res.status(401).json({ error: "invalid email" });
+    }
+    const userId = emailLookUp.Item.userId;
+
+    const result = await ddb.send(
+      new GetCommand({
+        TableName: "EcommerceTable",
+        Key: {
+          PK: `USER#${userId}`,
+          SK: `PROFILE#${userId}`,
+        },
+      })
+    );
+    const user = result.Item as User;
+    if (!user) {
+      return res.status(401).json({ error: "invalid account" });
+    }
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).json({ error: "invalid password" });
+    }
+    const token = createToken({
+      userId: user.userId,
+      email: user.email,
+      roleL: user.role,
+    });
+    res.json({ token });
+  } catch (err) {
+    console.error("login error");
+    res.status(500).json({ error: "login failed" });
+  }
 });
 export default router;
